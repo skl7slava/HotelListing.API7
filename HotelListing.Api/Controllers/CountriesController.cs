@@ -10,6 +10,9 @@ using HotelListing.Api.Models.Country;
 using AutoMapper;
 using HotelListing.Api.Contracts;
 using Microsoft.AspNetCore.Authorization;
+using HotelListing.Api.Exceptions;
+using HotelListing.Api.Models;
+using Microsoft.AspNetCore.OData.Query;
 
 namespace HotelListing.Api.Controllers
 {
@@ -27,16 +30,22 @@ namespace HotelListing.Api.Controllers
             _countriesRepository = countriesRepository;
         }
 
-        // GET: api/Countries
+        // GET: api/Countries/?StartIndex=0&pagesize=25&PageNumber=1
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
+        public async Task<ActionResult<PagedResult<GetCountryDto>>> GetPagedCountries([FromQuery] QueryParameters queryParameters)
         {
-            //if (_countriesRepository.GetAllSync == null)
-            //{
-            //    return NotFound();
-            //}
-            var countries = await _countriesRepository.GetAllSync();
+           
+            var pagedCountriesResult = await _countriesRepository.GetAllSync<GetCountryDto>(queryParameters);
 
+            
+            return Ok(pagedCountriesResult);
+        }
+        // GET: api/Countries
+        [HttpGet("GetAll")]
+        [EnableQuery]
+        public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
+        {            
+            var countries = await _countriesRepository.GetAllSync();
             var records = _mapper.Map<IEnumerable<GetCountryDto>>(countries);
             return Ok(records);
         }
@@ -53,7 +62,7 @@ namespace HotelListing.Api.Controllers
 
             if (country == null)
             {
-                return NotFound();
+                throw new NotFoundException(nameof(GetCountry),id);
             }
             var result = _mapper.Map<CountryDto>(country);
             return Ok(result);

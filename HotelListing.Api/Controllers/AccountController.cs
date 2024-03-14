@@ -11,10 +11,12 @@ namespace HotelListing.Api.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthManager _authManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IAuthManager authManager)
+        public AccountController(IAuthManager authManager, ILogger<AccountController> logger)
         {
             this._authManager = authManager;
+            this._logger = logger;
         }
 
         [HttpPost]
@@ -23,17 +25,27 @@ namespace HotelListing.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
         {
-            var errors =await  _authManager.Register(apiUserDto);
-            if (errors.Any())
+            _logger.LogInformation($"Registration attempt: {apiUserDto.Email}");
+            try
             {
-                foreach (var error in errors)
+                var errors = await _authManager.Register(apiUserDto);
+                if (errors.Any())
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
-                }
-                return BadRequest(ModelState);
+                    foreach (var error in errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
 
+                }
+                return Ok();
             }
-            return Ok();  
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,$"something wrong at user registration - {ex.Message}");
+                return Problem($"Something wrong in{nameof(Register)} ",statusCode: 500);
+            }
+             
         }
 
         [HttpPost]

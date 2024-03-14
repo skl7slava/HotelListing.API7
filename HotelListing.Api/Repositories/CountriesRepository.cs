@@ -1,4 +1,5 @@
-﻿using HotelListing.Api.Contracts;
+﻿using AutoMapper;
+using HotelListing.Api.Contracts;
 using HotelListing.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +9,12 @@ namespace HotelListing.Api.Repositories
 
     {
         private readonly HotelListingDbContext _context;
+        private readonly IMapper mapper;
 
-        public CountriesRepository(HotelListingDbContext context) : base(context)
+        public CountriesRepository(HotelListingDbContext context,IMapper mapper) : base(context,mapper)
         {
             this._context = context;
+            this.mapper = mapper;
         }
 
         public async Task<Country> GetDetails(int Id)

@@ -1,4 +1,7 @@
-﻿using HotelListing.Api.Contracts;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using HotelListing.Api.Contracts;
+using HotelListing.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Api.Repositories
@@ -6,10 +9,12 @@ namespace HotelListing.Api.Repositories
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         private readonly HotelListingDbContext _context;
+        private readonly IMapper _mapper;
 
-        public GenericRepository(HotelListingDbContext context)
+        public GenericRepository(HotelListingDbContext context,IMapper  mapper)
         {
             _context = context;
+            this._mapper = mapper;
         }
         public async  Task<T> AddAsync(T entity)
         {
@@ -34,6 +39,25 @@ namespace HotelListing.Api.Repositories
         public async Task<List<T>> GetAllSync()
         {
             return await _context.Set<T>().ToListAsync();
+        }
+
+        public async Task<PagedResult<TResult>> GetAllSync<TResult>(QueryParameters queryParameters)
+        {
+            var totalsize = await _context.Set<T>().CountAsync();
+            var items = await _context.Set<T>()
+                .Skip(queryParameters.StartIndex)
+                .Take(queryParameters.PageSize)
+                .ProjectTo<TResult>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            return new PagedResult<TResult>
+            {
+                Items = items,
+                PageNumber = queryParameters.PageNumber,
+                RecordNumber = queryParameters.PageSize,
+                TotalCount = totalsize
+
+            };
         }
 
         public async Task<T> GetAsync(int? id)
