@@ -1,4 +1,5 @@
 ﻿using HotelListing.Api.Contracts;
+using HotelListing.Api.Core.Contracts;
 using HotelListing.Api.Data;
 using HotelListing.Api.Data.Users;
 using Microsoft.AspNetCore.Http;
